@@ -8,7 +8,6 @@ const slug: dataSlug = {
     timeSchedule: '24 Oktober 2021, 16:30'
 }
 
-
 const Home: FC = () => {
     const primaryColor: string = '#6F32D2'
     const [show, setShow] = useState<boolean>(true)
