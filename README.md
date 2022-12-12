@@ -12,7 +12,7 @@ This project uses several stacks like :
 
 ## How to run :
 
-### `https://github.com/feryrmdhn/lms-simple-crud.git`
+### `git clone https://github.com/feryrmdhn/lms-simple-crud.git`
 ### `cd lms-simple-crud`
 ### `npm install`
 ### `npm start`
