@@ -303,15 +303,15 @@ const Home: FC = () => {
                 }
             </Tabs>
 
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Modal isOpen={isOpen} onClose={onClose} size='lg'>
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader>Modal Title</ModalHeader>
+                    <ModalHeader>Add Lesson</ModalHeader>
                     <ModalCloseButton />
                     <form onSubmit={formik.handleSubmit}>
                         <ModalBody>
                             <FormControl isRequired>
-                                <FormLabel htmlFor='name'>First name</FormLabel>
+                                <FormLabel htmlFor='name'>Lesson name</FormLabel>
                                 <Input
                                     name='name'
                                     type='text'
@@ -327,7 +327,7 @@ const Home: FC = () => {
                                     type='text'
                                     mb={5}
                                     onChange={formik.handleChange}
-                                    value={formik.values.name}
+                                    value={formik.values.duration}
                                 />
                             </FormControl>
                             <FormControl>
@@ -350,6 +350,7 @@ const Home: FC = () => {
                                     <Stack direction='row'>
                                         <Radio value='video'>Video</Radio>
                                         <Radio value='onsite'>Onsite</Radio>
+                                        <Radio value='image'>Image</Radio>
                                     </Stack>
                                 </RadioGroup>
                             </FormControl>
@@ -357,7 +358,7 @@ const Home: FC = () => {
 
                         <ModalFooter>
                             <Button mr={3} onClick={onClose}>
-                                Close
+                                Cancel
                             </Button>
                             <Button colorScheme='green' type="submit">
                                 Add
