@@ -45,7 +45,7 @@ export interface EditableProps {
     isPreviewFocus: boolean;
 }
 
-export type TypeLesson = 'video' | 'image' | 'onsite';
+export type TypeLesson = 'video' | 'image' | 'onsite'
 
 export interface Lesson {
     id: number;
@@ -53,9 +53,9 @@ export interface Lesson {
     name?: string;
     icon?: ReactElement<SVGAElement>;
     duration?: string;
-    typeLesson: TypeLesson
-    isPreview?: boolean;
-    isRequired: boolean;
+    typeLesson: TypeLesson | string;
+    isPreview?: boolean | string;
+    isRequired: boolean | string;
     created_at?: Date | string;
 }
 

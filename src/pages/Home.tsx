@@ -1,23 +1,34 @@
 import { FC, useState } from "react";
-import { Box, Button, Center, Flex, IconButton, Menu, MenuButton, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Tab, TabList, TabPanel, TabPanels, Tabs, Text, useBreakpointValue, useDisclosure, VStack } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, FormControl, FormLabel, IconButton, Input, Menu, MenuButton, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Radio, RadioGroup, Select, Stack, Tab, TabList, TabPanel, TabPanels, Tabs, Text, useBreakpointValue, useDisclosure, VStack } from "@chakra-ui/react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { DataSlug, Lesson, SessionData } from "../types";
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd'
 import { itemStyle, reorder } from "../helper";
 import CustomEdit from "../components/editable";
 import { RxDragHandleDots2 } from "react-icons/rx";
-import { FiVideo } from "react-icons/fi"
 import { IoIosMore } from "react-icons/io";
 import { IoDownloadOutline } from "react-icons/io5";
 import { BiTimeFive } from "react-icons/bi";
-import { FiMoreVertical } from "react-icons/fi";
+import { FiVideo, FiMoreVertical, FiMapPin } from "react-icons/fi";
 import { AddIcon as iconAdd } from "../assets";
 import ModalDialog from "../components/dialog";
-import { defaultDataSession, defaultDataLesson } from "../staticData";
+import { defaultDataSession } from "../staticData";
+import { useFormik } from "formik";
 
 const slug: DataSlug = {
     updated_at: '18 October 2021 | 13:23',
     timeSchedule: '24 Oktober 2021, 16:30'
+}
+
+const initialValues: Lesson = {
+    id: 0,
+    idSession: 0,
+    name: '',
+    duration: '',
+    isPreview: false,
+    isRequired: true,
+    created_at: new Date(),
+    typeLesson: 'video'
 }
 
 const Home: FC = () => {
@@ -25,24 +36,15 @@ const Home: FC = () => {
     const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false })
     const [show, setShow] = useState<boolean>(true)
     const [data, setData] = useState<Array<SessionData>>(defaultDataSession)
-    const [dataLesson, setDataLesson] = useState<Array<Lesson>>(defaultDataLesson)
-    const [lesson, setLesson] = useState<Lesson>({
-        id: 0,
-        idSession: 0,
-        name: '',
-        duration: '',
-        isPreview: false,
-        isRequired: true,
-        created_at: '',
-        typeLesson: 'video'
-    })
+    const [dataLesson, setDataLesson] = useState<Array<any>>(defaultDataSession)
     const { isOpen, onOpen, onClose } = useDisclosure()
 
     const addSession = () => {
         const lastIdValue: Array<number> = data.map(data => data.id)
         const newSession: SessionData = {
             id: data.length !== 0 ? Math.max(...lastIdValue) + 1 : 1,
-            name: data.length !== 0 ? `Session ${Math.max(...lastIdValue) + 1}` : 'Session 1'
+            name: data.length !== 0 ? `Session ${Math.max(...lastIdValue) + 1}` : 'Session 1',
+            lesson: []
         }
         setData([
             ...data,
@@ -54,15 +56,18 @@ const Home: FC = () => {
         setData(data.filter(item => item.id !== id))
     }
 
-    const addLesson = () => {
+    //Add lesson
+    const formik = useFormik({
+        initialValues,
+        onSubmit: (values, { resetForm }) => {
+            let merge = Object.assign(values, { isPreview: values.isPreview === "1" ? true : false }, { isRequired: values.isRequired === "1" ? true : false })
+            console.log(merge)
+            resetForm()
+        },
+    })
 
-    }
-
-    const deleteLesson = (id: number) => {
-        // let newData = data.map(items => items.lesson?.map(item => item).filter(list => list.id !== id))
-        // setData(newData)
-        setDataLesson(dataLesson.filter(item => item.id !== id))
-        console.log(id)
+    const deleteLesson = (idSession: number, id: number) => {
+        setDataLesson(dataLesson.map(list => list.lesson?.filter((u: any) => u.idSession === idSession && u.id !== id)))
     }
 
     const handleDragEnd = (result: any) => {
@@ -85,7 +90,6 @@ const Home: FC = () => {
             setDataLesson(items)
         }
     };
-
 
     return (
         <>
@@ -173,7 +177,7 @@ const Home: FC = () => {
                                                                     </Menu>
                                                                 </Flex>
                                                                 <Box py='16px' px='24px' overflow='auto'>
-                                                                    {dataLesson.length !== 0 ?
+                                                                    {data[index].lesson?.length !== 0 ?
                                                                         <>
                                                                             <DragDropContext onDragEnd={handleDragEnd}>
                                                                                 <Droppable droppableId='lesson' key={item.id} type="droppable-lesson">
@@ -185,7 +189,7 @@ const Home: FC = () => {
                                                                                             spacing={0}
                                                                                             overflow="auto"
                                                                                         >
-                                                                                            {data.map(list => list.lesson?.filter(u => u.idSession === item.id).map((items, index) => (
+                                                                                            {dataLesson.map(list => list.lesson?.filter((u: any) => u.idSession === item.id).map((items: any, index: number) => (
                                                                                                 <Draggable
                                                                                                     key={items.id}
                                                                                                     draggableId={`${items.id}`}
@@ -205,9 +209,11 @@ const Home: FC = () => {
                                                                                                                 <Flex justify={{ base: 'space-between' }}>
                                                                                                                     <Flex m={0}>
                                                                                                                         <Box py={2}><RxDragHandleDots2 size='25px' /></Box>
-                                                                                                                        <Box bg='#F6F8FC' mx={2} p={2} borderRadius='8px'><FiVideo size='24px' /></Box>
+                                                                                                                        <Box bg='#F6F8FC' mx={2} p={2} borderRadius='8px'>
+                                                                                                                            {items.typeLesson === 'video' ? <FiVideo size='24px' /> : <FiMapPin size='24px' />}
+                                                                                                                        </Box>
                                                                                                                         <Text my={2} pr={4} fontSize='16px' fontWeight={500} color='#252A3C' borderRight='1px solid #DFE5EE'>{items.name}</Text>
-                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#7800EF'>{items.isRequired && 'Required'}</Text>
+                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#7800EF'>{items.isRequired ? 'Required' : 'Not-required'}</Text>
                                                                                                                         <Text fontSize='26px'>&bull;</Text>
                                                                                                                         <Text my={2} px={4} fontSize='16px' fontWeight={500}>{items.isPreview && 'Previewable'}</Text>
                                                                                                                     </Flex>
@@ -235,7 +241,7 @@ const Home: FC = () => {
                                                                                                                                     isCentered={false}
                                                                                                                                     title="Delete Lesson"
                                                                                                                                     desc="Are you sure want to delete this Lesson ?"
-                                                                                                                                    onSubmit={() => deleteLesson(items.id)}
+                                                                                                                                    onSubmit={() => deleteLesson(item.id, items.id)}
                                                                                                                                     onCancel={() => { }}
                                                                                                                                 />
                                                                                                                             </MenuList>
@@ -302,16 +308,62 @@ const Home: FC = () => {
                 <ModalContent>
                     <ModalHeader>Modal Title</ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody>
-                        <h2>hihihihih</h2>
-                    </ModalBody>
+                    <form onSubmit={formik.handleSubmit}>
+                        <ModalBody>
+                            <FormControl isRequired>
+                                <FormLabel htmlFor='name'>First name</FormLabel>
+                                <Input
+                                    name='name'
+                                    type='text'
+                                    mb={5}
+                                    onChange={formik.handleChange}
+                                    value={formik.values.name}
+                                />
+                            </FormControl>
+                            <FormControl isRequired>
+                                <FormLabel htmlFor='duration'>Duration</FormLabel>
+                                <Input
+                                    name='duration'
+                                    type='text'
+                                    mb={5}
+                                    onChange={formik.handleChange}
+                                    value={formik.values.name}
+                                />
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel htmlFor='isPreview'>Preview</FormLabel>
+                                <Select name="isPreview" onChange={formik.handleChange} mb={5} placeholder='Select option'>
+                                    <option value={true ? "1" : undefined}>Yes</option>
+                                    <option value={false ? "0" : undefined}>No</option>
+                                </Select>
+                            </FormControl>
+                            <FormControl isRequired>
+                                <FormLabel htmlFor='isRequired'>Require</FormLabel>
+                                <Select name="isRequired" onChange={formik.handleChange} mb={5} placeholder='Select option'>
+                                    <option value={true ? "1" : undefined}>Yes</option>
+                                    <option value={false ? "0" : undefined}>No</option>
+                                </Select>
+                            </FormControl>
+                            <FormControl isRequired>
+                                <FormLabel htmlFor='typeLesson'>Type</FormLabel>
+                                <RadioGroup name="typeLesson" onChange={formik.handleChange} value={formik.values.typeLesson}>
+                                    <Stack direction='row'>
+                                        <Radio value='video'>Video</Radio>
+                                        <Radio value='onsite'>Onsite</Radio>
+                                    </Stack>
+                                </RadioGroup>
+                            </FormControl>
+                        </ModalBody>
 
-                    <ModalFooter>
-                        <Button colorScheme='blue' mr={3} onClick={onClose}>
-                            Close
-                        </Button>
-                        <Button variant='ghost'>Secondary Action</Button>
-                    </ModalFooter>
+                        <ModalFooter>
+                            <Button mr={3} onClick={onClose}>
+                                Close
+                            </Button>
+                            <Button colorScheme='green' type="submit">
+                                Add
+                            </Button>
+                        </ModalFooter>
+                    </form>
                 </ModalContent>
             </Modal>
         </>
