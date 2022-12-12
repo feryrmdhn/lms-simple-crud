@@ -7,6 +7,7 @@ const Header: FC<HeaderProps> = ({ leftElement, rightElement, ...otherProps }) =
         <>
             <Box as="header"
                 position='fixed'
+                bg='white'
                 py={26}
                 px={25}
                 w='100%'
