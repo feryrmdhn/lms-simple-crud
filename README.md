@@ -16,3 +16,7 @@ This project uses several stacks like :
 ### `cd lms-simple-crud`
 ### `npm install`
 ### `npm start`
+
+</br>
+Note : </br>
+<i>Remaining 2 features are not finished</i>
