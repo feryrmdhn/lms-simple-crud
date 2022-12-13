@@ -36,7 +36,9 @@ const Home: FC = () => {
     const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false })
     const [show, setShow] = useState<boolean>(true)
     const [data, setData] = useState<Array<SessionData>>(defaultDataSession)
-    const [dataLesson, setDataLesson] = useState<Array<any>>(defaultDataSession)
+    const [dataLesson, setDataLesson] = useState<Array<any>>(data.map(q => q.lesson))
+    const [getIdSession, setGetIdSession] = useState<number>(0)
+    const [newLessonData, setNewLessonData] = useState<Array<any>>([])
     const { isOpen, onOpen, onClose } = useDisclosure()
 
     const addSession = () => {
@@ -60,14 +62,19 @@ const Home: FC = () => {
     const formik = useFormik({
         initialValues,
         onSubmit: (values, { resetForm }) => {
-            let merge = Object.assign(values, { isPreview: values.isPreview === "1" ? true : false }, { isRequired: values.isRequired === "1" ? true : false })
-            console.log(merge)
+            let merge = Object.assign(values, { idSession: getIdSession }, { isPreview: values.isPreview === "1" ? true : false }, { isRequired: values.isRequired === "1" ? true : false })
+            let join = [...newLessonData[0], merge]
+            console.log(join)
             resetForm()
+            setData([
+                ...data,
+                ...join
+            ])
         },
     })
 
     const deleteLesson = (idSession: number, id: number) => {
-        setDataLesson(dataLesson.map(list => list.lesson?.filter((u: any) => u.idSession === idSession && u.id !== id)))
+        setData(data.map(list => list.lesson?.filter((u) => u.idSession === idSession && u.id !== id)) as any)
     }
 
     const handleDragEnd = (result: any) => {
@@ -90,6 +97,15 @@ const Home: FC = () => {
             setDataLesson(items)
         }
     };
+
+    const openModalAdd = (id: number) => {
+        setGetIdSession(id)
+        onOpen()
+        setNewLessonData(dataLesson.filter(list => list.id === id).map(u => u.lesson))
+        console.log(
+            dataLesson[id].map((q: any) => q)
+        )
+    }
 
     return (
         <>
@@ -177,7 +193,7 @@ const Home: FC = () => {
                                                                     </Menu>
                                                                 </Flex>
                                                                 <Box py='16px' px='24px' overflow='auto'>
-                                                                    {data[index].lesson?.length !== 0 ?
+                                                                    {item.lesson?.length !== 0 ?
                                                                         <>
                                                                             <DragDropContext onDragEnd={handleDragEnd}>
                                                                                 <Droppable droppableId='lesson' key={item.id} type="droppable-lesson">
@@ -189,7 +205,7 @@ const Home: FC = () => {
                                                                                             spacing={0}
                                                                                             overflow="auto"
                                                                                         >
-                                                                                            {dataLesson.map(list => list.lesson?.filter((u: any) => u.idSession === item.id).map((items: any, index: number) => (
+                                                                                            {data[item.id]?.map((items: any, index: number) =>
                                                                                                 <Draggable
                                                                                                     key={items.id}
                                                                                                     draggableId={`${items.id}`}
@@ -252,8 +268,7 @@ const Home: FC = () => {
                                                                                                         </div>
                                                                                                     )}
                                                                                                 </Draggable>
-                                                                                            )
-                                                                                            ))}
+                                                                                            )}
                                                                                             {provided.placeholder}
                                                                                         </VStack>
                                                                                     )}
@@ -264,7 +279,7 @@ const Home: FC = () => {
                                                                         <Center>There is no lesson material</Center>
                                                                     }
                                                                     <Flex>
-                                                                        <Button p={2} bg={primaryColor} color='white' _hover={{ background: primaryColor, color: 'white' }} onClick={onOpen}>
+                                                                        <Button p={2} bg={primaryColor} color='white' _hover={{ background: primaryColor, color: 'white' }} onClick={() => openModalAdd(item.id)}>
                                                                             <img src={iconAdd} alt='add-icon' />
                                                                         </Button>
                                                                         <Text mx={4} color='#252A3C' fontSize={16} fontWeight={500} lineHeight='35px'>Add Lesson Material</Text>
@@ -318,16 +333,18 @@ const Home: FC = () => {
                                     mb={5}
                                     onChange={formik.handleChange}
                                     value={formik.values.name}
+                                    placeholder='Name'
                                 />
                             </FormControl>
                             <FormControl isRequired>
                                 <FormLabel htmlFor='duration'>Duration</FormLabel>
                                 <Input
                                     name='duration'
-                                    type='text'
+                                    type='time'
                                     mb={5}
                                     onChange={formik.handleChange}
                                     value={formik.values.duration}
+                                    placeholder='Interval Duration'
                                 />
                             </FormControl>
                             <FormControl>
@@ -346,7 +363,7 @@ const Home: FC = () => {
                             </FormControl>
                             <FormControl isRequired>
                                 <FormLabel htmlFor='typeLesson'>Type</FormLabel>
-                                <RadioGroup name="typeLesson" onChange={formik.handleChange} value={formik.values.typeLesson}>
+                                <RadioGroup name="typeLesson" onChange={(value) => formik.setFieldValue('typeLesson', value)} defaultValue={initialValues.typeLesson}>
                                     <Stack direction='row'>
                                         <Radio value='video'>Video</Radio>
                                         <Radio value='onsite'>Onsite</Radio>
