@@ -36,7 +36,7 @@ const Home: FC = () => {
     const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false })
     const [show, setShow] = useState<boolean>(true)
     const [data, setData] = useState<Array<SessionData>>(defaultDataSession)
-    const [dataLesson, setDataLesson] = useState<Array<any>>(data.map(q => q.lesson))
+    const [dataLesson, setDataLesson] = useState<Array<any>>(defaultDataSession) //consider to add this state because the value are same
     const [getIdSession, setGetIdSession] = useState<number>(0)
     const [newLessonData, setNewLessonData] = useState<Array<any>>([])
     const { isOpen, onOpen, onClose } = useDisclosure()
@@ -62,19 +62,22 @@ const Home: FC = () => {
     const formik = useFormik({
         initialValues,
         onSubmit: (values, { resetForm }) => {
-            let merge = Object.assign(values, { idSession: getIdSession }, { isPreview: values.isPreview === "1" ? true : false }, { isRequired: values.isRequired === "1" ? true : false })
-            let join = [...newLessonData[0], merge]
+            let merge = Object.assign(values,
+                { id: Math.max(...newLessonData[0].lesson.map((items: Lesson) => items.id)) + 1 },
+                { idSession: getIdSession },
+                { isPreview: values.isPreview === "1" ? true : false },
+                { isRequired: values.isRequired === "1" ? true : false }
+            )
+            let join = [...newLessonData[0].lesson, merge]
+            //-----------below need enhancment-------------
             console.log(join)
             resetForm()
-            setData([
-                ...data,
-                ...join
-            ])
         },
     })
 
     const deleteLesson = (idSession: number, id: number) => {
-        setData(data.map(list => list.lesson?.filter((u) => u.idSession === idSession && u.id !== id)) as any)
+        //---------below need adjustment-------------
+        setDataLesson(dataLesson.map(list => list.lesson?.filter((u: any) => u.idSession === idSession && u.id !== id)))
     }
 
     const handleDragEnd = (result: any) => {
@@ -89,6 +92,7 @@ const Home: FC = () => {
             )
             setData(items)
         } else {
+            //----------below need enhancment-------------
             const items: any = reorder(
                 dataLesson,
                 result.source.index,
@@ -101,10 +105,7 @@ const Home: FC = () => {
     const openModalAdd = (id: number) => {
         setGetIdSession(id)
         onOpen()
-        setNewLessonData(dataLesson.filter(list => list.id === id).map(u => u.lesson))
-        console.log(
-            dataLesson[id].map((q: any) => q)
-        )
+        setNewLessonData(data.filter(item => item.id === id))
     }
 
     return (
@@ -205,7 +206,7 @@ const Home: FC = () => {
                                                                                             spacing={0}
                                                                                             overflow="auto"
                                                                                         >
-                                                                                            {data[item.id]?.map((items: any, index: number) =>
+                                                                                            {item.lesson?.map((items: any, index: number) => (
                                                                                                 <Draggable
                                                                                                     key={items.id}
                                                                                                     draggableId={`${items.id}`}
@@ -238,7 +239,7 @@ const Home: FC = () => {
                                                                                                                         <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{items.created_at as string}</Text>
                                                                                                                         <Text pr={4} fontSize='26px'>&bull;</Text>
                                                                                                                         <Box py={2}><BiTimeFive size='25px' color="#252A3C" /></Box>
-                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{items.duration}</Text>
+                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{`${items.duration} min`}</Text>
                                                                                                                         <Text pr={4} fontSize='26px'>&bull;</Text>
                                                                                                                         <Box py={2}><IoDownloadOutline size='25px' color="#252A3C" /></Box>
                                                                                                                         <Button variant='ghost'>
@@ -268,7 +269,7 @@ const Home: FC = () => {
                                                                                                         </div>
                                                                                                     )}
                                                                                                 </Draggable>
-                                                                                            )}
+                                                                                            ))}
                                                                                             {provided.placeholder}
                                                                                         </VStack>
                                                                                     )}
@@ -333,7 +334,7 @@ const Home: FC = () => {
                                     mb={5}
                                     onChange={formik.handleChange}
                                     value={formik.values.name}
-                                    placeholder='Name'
+                                    placeholder='Input Name Lesson'
                                 />
                             </FormControl>
                             <FormControl isRequired>
@@ -344,7 +345,6 @@ const Home: FC = () => {
                                     mb={5}
                                     onChange={formik.handleChange}
                                     value={formik.values.duration}
-                                    placeholder='Interval Duration'
                                 />
                             </FormControl>
                             <FormControl>

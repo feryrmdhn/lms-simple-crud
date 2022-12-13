@@ -14,7 +14,7 @@ export const defaultDataSession: Array<SessionData> = [
                 isRequired: true,
                 typeLesson: 'video',
                 created_at: '24 Oktober 2021, 16:30',
-                duration: '06.30 min'
+                duration: '06.30'
             },
             {
                 id: 2,
@@ -25,7 +25,7 @@ export const defaultDataSession: Array<SessionData> = [
                 isRequired: false,
                 typeLesson: 'onsite',
                 created_at: '24 Oktober 2021, 16:30',
-                duration: '06.30 min'
+                duration: '06.30'
             }
         ]
     },
@@ -42,7 +42,7 @@ export const defaultDataSession: Array<SessionData> = [
                 isRequired: true,
                 typeLesson: 'video',
                 created_at: '24 Oktober 2021, 16:30',
-                duration: '06.30 min'
+                duration: '06.30'
             },
             {
                 id: 2,
@@ -53,7 +53,7 @@ export const defaultDataSession: Array<SessionData> = [
                 isRequired: true,
                 typeLesson: 'onsite',
                 created_at: '24 Oktober 2021, 16:30',
-                duration: '06.30 min'
+                duration: '06.30'
             }
         ]
     },
