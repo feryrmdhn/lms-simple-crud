@@ -7,7 +7,7 @@ export const reorder = (list: any, startIndex: number, endIndex: number) => {
     return result
 }
 
-export const itemStyle = (isDragging: boolean, draggableStyle: any | undefined) => ({
+export const itemStyle = (_isDragging: boolean, draggableStyle: any | undefined) => ({
     ...draggableStyle,
     userSelect: 'none',
     width: '100%',

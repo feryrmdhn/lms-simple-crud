@@ -27,7 +27,7 @@ const initialValues: Lesson = {
     duration: '',
     isPreview: false,
     isRequired: true,
-    created_at: new Date(),
+    created_at: new Date().toLocaleString(),
     typeLesson: 'video'
 }
 
@@ -36,7 +36,6 @@ const Home: FC = () => {
     const isMobile = useBreakpointValue({ base: true, md: false }, { ssr: false })
     const [show, setShow] = useState<boolean>(true)
     const [data, setData] = useState<Array<SessionData>>(defaultDataSession)
-    const [dataLesson, setDataLesson] = useState<Array<any>>(defaultDataSession) //consider to add this state because the value are same
     const [getIdSession, setGetIdSession] = useState<number>(0)
     const [newLessonData, setNewLessonData] = useState<Array<any>>([])
     const { isOpen, onOpen, onClose } = useDisclosure()
@@ -68,39 +67,77 @@ const Home: FC = () => {
                 { isPreview: values.isPreview === "1" ? true : false },
                 { isRequired: values.isRequired === "1" ? true : false }
             )
-            let join = [...newLessonData[0].lesson, merge]
-            //-----------below need enhancment-------------
-            console.log(join)
+            let newData = [...data];
+            newData.filter(q => q.id === getIdSession).map((items) => items.lesson?.push(merge));
+            setData(newData)
             resetForm()
+            onClose()
         },
     })
 
-    const deleteLesson = (idSession: number, id: number) => {
-        //---------below need adjustment-------------
-        setDataLesson(dataLesson.map(list => list.lesson?.filter((u: any) => u.idSession === idSession && u.id !== id)))
+    const deleteLesson = async (idSession: number, id: number) => {
+        setData(prevState => {
+            let newData = prevState
+            let items = data[idSession - 1].lesson?.filter(list => list.id !== id)
+            newData[idSession - 1].lesson = items
+            return [...newData]
+        })
     }
 
     const handleDragEnd = (result: any) => {
-        const { type } = result;
+        const { type, source, destination } = result;
 
-        if (!result.destination) return
+        if (!destination) return
         if (type === "droppable-session") {
             const items: any = reorder(
                 data,
-                result.source.index,
-                result.destination.index
+                source.index,
+                destination.index
             )
             setData(items)
-        } else {
-            //----------below need enhancment-------------
-            const items: any = reorder(
-                dataLesson,
-                result.source.index,
-                result.destination.index
-            )
-            setDataLesson(items)
+        }
+        else {
+            const lessons = data.reduce((list: any, item: SessionData) => {
+                list[item.id] = item.lesson;
+                return list;
+            }, {});
+
+            const sourceParentId = parseInt(source.droppableId);
+            const destParentId = parseInt(destination.droppableId);
+
+            const sourceLesson = lessons[sourceParentId];
+            const destLesson = lessons[destParentId];
+
+            let newItems = [...data];
+            if (sourceParentId === destParentId) {
+                const reorderedSubItems: any = reorder(
+                    sourceLesson,
+                    source.index,
+                    destination.index
+                );
+                newItems = newItems.map(item => {
+                    if (item.id === sourceParentId) {
+                        item.lesson = reorderedSubItems;
+                    }
+                    return item;
+                });
+                setData(newItems)
+            } else {
+                let newSourceLesson = [...sourceLesson];
+                const [draggedItem] = newSourceLesson.splice(source.index, 1);
+
+                let newDestSubItems = [...destLesson];
+                newDestSubItems.splice(result.destination.index, 0, draggedItem);
+                newItems = newItems.map(item => {
+                    if (item.id === sourceParentId) item.lesson = newSourceLesson;
+                    else if (item.id === destParentId) item.lesson = newDestSubItems;
+                    return item;
+                });
+                setData(newItems)
+            }
         }
     };
+
 
     const openModalAdd = (id: number) => {
         setGetIdSession(id)
@@ -197,7 +234,7 @@ const Home: FC = () => {
                                                                     {item.lesson?.length !== 0 ?
                                                                         <>
                                                                             <DragDropContext onDragEnd={handleDragEnd}>
-                                                                                <Droppable droppableId='lesson' key={item.id} type="droppable-lesson">
+                                                                                <Droppable droppableId={item.id.toString()} key={item.id} type="droppable-lesson">
                                                                                     {(provided, _snapshot) => (
                                                                                         <VStack
                                                                                             {...provided.droppableProps}
@@ -213,7 +250,12 @@ const Home: FC = () => {
                                                                                                     index={index}
                                                                                                 >
                                                                                                     {(provided, snapshot) => (
-                                                                                                        <div
+                                                                                                        <Box
+                                                                                                            key={items.id}
+                                                                                                            mb='16px'
+                                                                                                            py='10px'
+                                                                                                            px={2}
+                                                                                                            _hover={{ background: '#FBFAFF' }}
                                                                                                             ref={provided.innerRef}
                                                                                                             {...provided.draggableProps}
                                                                                                             {...provided.dragHandleProps}
@@ -222,51 +264,49 @@ const Home: FC = () => {
                                                                                                                 provided.draggableProps.style
                                                                                                             )}
                                                                                                         >
-                                                                                                            <Box key={items.id} mb='16px' py='10px' px={2} _hover={{ background: '#FBFAFF' }}>
-                                                                                                                <Flex justify={{ base: 'space-between' }}>
-                                                                                                                    <Flex m={0}>
-                                                                                                                        <Box py={2}><RxDragHandleDots2 size='25px' /></Box>
-                                                                                                                        <Box bg='#F6F8FC' mx={2} p={2} borderRadius='8px'>
-                                                                                                                            {items.typeLesson === 'video' ? <FiVideo size='24px' /> : <FiMapPin size='24px' />}
-                                                                                                                        </Box>
-                                                                                                                        <Text my={2} pr={4} fontSize='16px' fontWeight={500} color='#252A3C' borderRight='1px solid #DFE5EE'>{items.name}</Text>
-                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#7800EF'>{items.isRequired ? 'Required' : 'Not-required'}</Text>
-                                                                                                                        <Text fontSize='26px'>&bull;</Text>
-                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500}>{items.isPreview && 'Previewable'}</Text>
-                                                                                                                    </Flex>
-                                                                                                                    <Flex m={0}>
-                                                                                                                        <Box py={2}><BiTimeFive size='25px' color="#252A3C" /></Box>
-                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{items.created_at as string}</Text>
-                                                                                                                        <Text pr={4} fontSize='26px'>&bull;</Text>
-                                                                                                                        <Box py={2}><BiTimeFive size='25px' color="#252A3C" /></Box>
-                                                                                                                        <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{`${items.duration} min`}</Text>
-                                                                                                                        <Text pr={4} fontSize='26px'>&bull;</Text>
-                                                                                                                        <Box py={2}><IoDownloadOutline size='25px' color="#252A3C" /></Box>
-                                                                                                                        <Button variant='ghost'>
-                                                                                                                            <Text my={2} fontSize='16px' fontWeight={500} color='#252A3C'>Downloadable</Text>
-                                                                                                                        </Button>
-                                                                                                                        <Menu>
-                                                                                                                            <MenuButton
-                                                                                                                                as={IconButton}
-                                                                                                                                aria-label='Options'
-                                                                                                                                icon={<FiMoreVertical />}
-                                                                                                                                px={0}
-                                                                                                                            />
-                                                                                                                            <MenuList>
-                                                                                                                                <ModalDialog
-                                                                                                                                    size={isMobile ? 'xs' : 'md'}
-                                                                                                                                    isCentered={false}
-                                                                                                                                    title="Delete Lesson"
-                                                                                                                                    desc="Are you sure want to delete this Lesson ?"
-                                                                                                                                    onSubmit={() => deleteLesson(item.id, items.id)}
-                                                                                                                                    onCancel={() => { }}
-                                                                                                                                />
-                                                                                                                            </MenuList>
-                                                                                                                        </Menu>
-                                                                                                                    </Flex>
+                                                                                                            <Flex justify={{ base: 'space-between' }}>
+                                                                                                                <Flex m={0}>
+                                                                                                                    <Box py={2}><RxDragHandleDots2 size='25px' /></Box>
+                                                                                                                    <Box bg='#F6F8FC' mx={2} p={2} borderRadius='8px'>
+                                                                                                                        {items.typeLesson === 'video' ? <FiVideo size='24px' /> : <FiMapPin size='24px' />}
+                                                                                                                    </Box>
+                                                                                                                    <Text my={2} pr={4} fontSize='16px' fontWeight={500} color='#252A3C' borderRight='1px solid #DFE5EE'>{items.name}</Text>
+                                                                                                                    <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#7800EF'>{items.isRequired ? 'Required' : 'Not-required'}</Text>
+                                                                                                                    <Text fontSize='26px'>&bull;</Text>
+                                                                                                                    <Text my={2} px={4} fontSize='16px' fontWeight={500}>{items.isPreview && 'Previewable'}</Text>
                                                                                                                 </Flex>
-                                                                                                            </Box>
-                                                                                                        </div>
+                                                                                                                <Flex m={0}>
+                                                                                                                    <Box py={2}><BiTimeFive size='25px' color="#252A3C" /></Box>
+                                                                                                                    <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{items.created_at as string}</Text>
+                                                                                                                    <Text pr={4} fontSize='26px'>&bull;</Text>
+                                                                                                                    <Box py={2}><BiTimeFive size='25px' color="#252A3C" /></Box>
+                                                                                                                    <Text my={2} px={4} fontSize='16px' fontWeight={500} color='#252A3C'>{`${items.duration} min`}</Text>
+                                                                                                                    <Text pr={4} fontSize='26px'>&bull;</Text>
+                                                                                                                    <Box py={2}><IoDownloadOutline size='25px' color="#252A3C" /></Box>
+                                                                                                                    <Button variant='ghost'>
+                                                                                                                        <Text my={2} fontSize='16px' fontWeight={500} color='#252A3C'>Downloadable</Text>
+                                                                                                                    </Button>
+                                                                                                                    <Menu>
+                                                                                                                        <MenuButton
+                                                                                                                            as={IconButton}
+                                                                                                                            aria-label='Options'
+                                                                                                                            icon={<FiMoreVertical />}
+                                                                                                                            px={0}
+                                                                                                                        />
+                                                                                                                        <MenuList>
+                                                                                                                            <ModalDialog
+                                                                                                                                size={isMobile ? 'xs' : 'md'}
+                                                                                                                                isCentered={false}
+                                                                                                                                title="Delete Lesson"
+                                                                                                                                desc="Are you sure want to delete this Lesson ?"
+                                                                                                                                onSubmit={() => deleteLesson(item.id, items.id)}
+                                                                                                                                onCancel={() => { }}
+                                                                                                                            />
+                                                                                                                        </MenuList>
+                                                                                                                    </Menu>
+                                                                                                                </Flex>
+                                                                                                            </Flex>
+                                                                                                        </Box>
                                                                                                     )}
                                                                                                 </Draggable>
                                                                                             ))}
@@ -279,7 +319,7 @@ const Home: FC = () => {
                                                                         :
                                                                         <Center>There is no lesson material</Center>
                                                                     }
-                                                                    <Flex>
+                                                                    <Flex mt={3}>
                                                                         <Button p={2} bg={primaryColor} color='white' _hover={{ background: primaryColor, color: 'white' }} onClick={() => openModalAdd(item.id)}>
                                                                             <img src={iconAdd} alt='add-icon' />
                                                                         </Button>
