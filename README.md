@@ -17,6 +17,3 @@ This project uses several stacks like :
 ### `npm install`
 ### `npm start`
 
-</br>
-Note : </br>
-<i>Remaining 2 features are not finished</i>
